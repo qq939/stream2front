@@ -34,3 +34,29 @@ python screen_recorder.py
 - `Tab`: 代码自动补全
 - `Cmd + D`: 选择相同单词
 - `Cmd + Shift + L`: 选择所有相同单词
+
+---
+
+### 时间: 当前时间
+**用户问题**: 改用mss录制
+
+**完成内容**:
+1. 更新requirements.txt，将pyautogui替换为mss>=9.0.1
+2. 修改screen_recorder.py脚本:
+   - 导入mss库替代pyautogui
+   - 使用mss.mss()上下文管理器进行屏幕截图
+   - 获取主显示器信息(monitor[1])
+   - 处理BGRA到BGR的颜色格式转换
+   - 保持相同的录制功能和控制方式
+3. 安装了mss==10.0.0依赖包
+
+**mss库优势**:
+- 更高的截图性能和效率
+- 更少的系统资源占用
+- 跨平台兼容性更好
+- 支持多显示器环境
+
+**代码补全提示**:
+- 输入`mss.`后按Tab可看到所有mss方法
+- 输入`sct.`后按Tab可看到截图对象的所有属性
+- 使用`Cmd + Click`可跳转到mss库的定义

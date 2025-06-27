@@ -71,6 +71,39 @@ python screen_recorder.py
 ---
 
 ### 时间: 2024-12-19 当前时间
+**用户问题**: server.py采用FFmpeg替代cv2，因为cloudflare workers OpenCV 缺少系统依赖库 libGL.so.1
+
+**完成内容**:
+1. 修改server.py文件，将cv2替换为FFmpeg和Pillow:
+   - 移除`import cv2`，添加`import ffmpeg`、`from PIL import Image, ImageDraw, ImageFont`
+   - 创建`create_placeholder_image()`函数替代cv2.putText()功能
+   - 创建`encode_frame_to_jpeg()`函数替代cv2.imencode()的JPEG编码
+   - 创建`encode_frame_to_png()`函数替代cv2.imencode()的PNG编码
+   - 创建`decode_image_bytes()`函数替代cv2.imdecode()功能
+   - 使用PIL进行图像大小调整，替代cv2.resize()
+
+2. 更新requirements.txt文件:
+   - 添加`ffmpeg-python>=0.2.0`依赖
+   - 添加`Pillow>=10.0.0`依赖
+
+3. 安装新依赖包:
+   - 成功安装ffmpeg-python、Pillow和future包
+
+**技术改进**:
+- 解决Cloudflare Workers中OpenCV缺少系统依赖库的问题
+- 使用更轻量级的图像处理方案
+- 保持所有API接口功能不变
+- 提供更好的跨平台兼容性
+
+**VSCode快捷键提示**:
+- `Cmd + Shift + F`: 全局搜索替换（用于批量替换cv2相关代码）
+- `Cmd + F2`: 选择所有相同的单词进行批量编辑
+- `Cmd + Shift + K`: 删除整行
+- `Cmd + Enter`: 在下方插入新行
+
+---
+
+### 时间: 2024-12-19 当前时间
 **用户问题**: 不用写存储文件
 
 **完成内容**:

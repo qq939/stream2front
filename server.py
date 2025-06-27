@@ -6,13 +6,15 @@
 """
 
 from flask import Flask, Response, render_template, jsonify, request
-import cv2
+import ffmpeg
 import io
 import threading
 import time
 import queue
 import numpy as np
 from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont
+import base64
 
 app = Flask(__name__)
 
@@ -20,6 +22,96 @@ app = Flask(__name__)
 frame_queue = queue.Queue(maxsize=10)  # 帧队列，用于存储客户端推送的帧
 current_frame = None
 frame_lock = threading.Lock()
+
+def create_placeholder_image(width, height, text):
+    """创建占位符图像"""
+    # 创建RGB图像
+    img = Image.new('RGB', (width, height), color='black')
+    draw = ImageDraw.Draw(img)
+    
+    # 尝试使用默认字体，如果失败则使用内置字体
+    try:
+        font = ImageFont.truetype("/System/Library/Fonts/Arial.ttf", 24)
+    except:
+        font = ImageFont.load_default()
+    
+    # 计算文字位置（居中）
+    bbox = draw.textbbox((0, 0), text, font=font)
+    text_width = bbox[2] - bbox[0]
+    text_height = bbox[3] - bbox[1]
+    x = (width - text_width) // 2
+    y = (height - text_height) // 2
+    
+    # 绘制文字
+    draw.text((x, y), text, fill='white', font=font)
+    
+    # 转换为numpy数组 (RGB -> BGR for compatibility)
+    return np.array(img)[:, :, ::-1]
+
+def encode_frame_to_jpeg(frame, size=None):
+    """将numpy数组编码为JPEG字节"""
+    try:
+        # 如果frame是numpy数组，转换为PIL Image
+        if isinstance(frame, np.ndarray):
+            # BGR -> RGB
+            if len(frame.shape) == 3 and frame.shape[2] == 3:
+                frame_rgb = frame[:, :, ::-1]
+            else:
+                frame_rgb = frame
+            img = Image.fromarray(frame_rgb.astype('uint8'))
+        else:
+            img = frame
+        
+        # 调整大小
+        if size:
+            img = img.resize(size, Image.Resampling.LANCZOS)
+        
+        # 编码为JPEG
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG', quality=80)
+        return buffer.getvalue()
+    except Exception as e:
+        print(f"JPEG编码错误: {e}")
+        return None
+
+def encode_frame_to_png(frame):
+    """将numpy数组编码为PNG字节"""
+    try:
+        # 如果frame是numpy数组，转换为PIL Image
+        if isinstance(frame, np.ndarray):
+            # BGR -> RGB
+            if len(frame.shape) == 3 and frame.shape[2] == 3:
+                frame_rgb = frame[:, :, ::-1]
+            else:
+                frame_rgb = frame
+            img = Image.fromarray(frame_rgb.astype('uint8'))
+        else:
+            img = frame
+        
+        # 编码为PNG
+        buffer = io.BytesIO()
+        img.save(buffer, format='PNG')
+        return buffer.getvalue()
+    except Exception as e:
+        print(f"PNG编码错误: {e}")
+        return None
+
+def decode_image_bytes(image_bytes):
+    """解码图像字节为numpy数组"""
+    try:
+        # 使用PIL解码图像
+        img = Image.open(io.BytesIO(image_bytes))
+        
+        # 确保是RGB模式
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # 转换为numpy数组 (RGB -> BGR for compatibility)
+        frame = np.array(img)[:, :, ::-1]
+        return frame
+    except Exception as e:
+        print(f"图像解码错误: {e}")
+        return None
 
 @app.route('/')
 def index():
@@ -44,21 +136,18 @@ def video_feed():
                     frame = current_frame.copy()
                 else:
                     # 如果没有客户端推流，返回黑屏或等待
-                    frame = np.zeros((600, 800, 3), dtype=np.uint8)
-                    # 在黑屏上添加提示文字
-                    cv2.putText(frame, 'Waiting for client stream...', (200, 300), 
-                               cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                    frame = create_placeholder_image(800, 600, 'Waiting for client stream...')
             
-            # 调整帧大小
-            frame = cv2.resize(frame, (800, 600))
-            
-            # 编码为JPEG
-            ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-            if not ret:
+            # 调整帧大小并编码为JPEG
+            try:
+                frame_bytes = encode_frame_to_jpeg(frame, (800, 600))
+                if frame_bytes is None:
+                    time.sleep(0.1)
+                    continue
+            except Exception as e:
+                print(f"帧编码错误: {e}")
                 time.sleep(0.1)
                 continue
-                
-            frame_bytes = buffer.tobytes()
             
             # 返回MJPEG流格式
             yield (b'--frame\r\n'
@@ -85,17 +174,16 @@ def screenshot():
                 img_array = current_frame.copy()
             else:
                 # 如果没有客户端推流，返回黑屏
-                img_array = np.zeros((600, 800, 3), dtype=np.uint8)
-                cv2.putText(img_array, 'No client stream available', (200, 300), 
-                           cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                img_array = create_placeholder_image(800, 600, 'No client stream available')
         
         # 将numpy数组编码为PNG格式
-        ret, buffer = cv2.imencode('.png', img_array)
-        if not ret:
-            return Response("截图编码失败", status=500)
-        
-        # 转换为字节数据
-        img_bytes = buffer.tobytes()
+        try:
+            img_bytes = encode_frame_to_png(img_array)
+            if img_bytes is None:
+                return Response("截图编码失败", status=500)
+        except Exception as e:
+            print(f"截图编码错误: {e}")
+            return Response(f"截图编码失败: {str(e)}", status=500)
         
         return Response(img_bytes, mimetype='image/png')
         
@@ -122,12 +210,15 @@ def push_frame():
             return jsonify({'error': '没有选择文件'}), 400
         
         # 读取图像数据
-        file_bytes = file.read()
-        nparr = np.frombuffer(file_bytes, np.uint8)
-        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        
-        if frame is None:
-            return jsonify({'error': '无法解码图像'}), 400
+        try:
+            file_bytes = file.read()
+            frame = decode_image_bytes(file_bytes)
+            
+            if frame is None:
+                return jsonify({'error': '无法解码图像'}), 400
+        except Exception as e:
+            print(f"图像解码错误: {e}")
+            return jsonify({'error': f'图像解码失败: {str(e)}'}), 400
         
         # 更新当前帧
         with frame_lock:

@@ -202,5 +202,5 @@ if __name__ == "__main__":
     screen_info = recorder.get_screen_info()
     print(f"屏幕信息: {screen_info}")
     
-    # 开始显示
+    # # 开始显示
     recorder.start_display()

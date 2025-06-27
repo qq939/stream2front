@@ -167,3 +167,38 @@ if filename:
 - `Cmd + Shift + G`: 打开Git面板
 - 在Source Control面板中可以看到被忽略的文件会变灰
 - 使用`git status`命令验证忽略规则是否生效
+
+---
+
+### 时间: 当前时间
+**用户问题**: 把start_display改造成生成器，使用yield返回MJPEG流格式的帧数据
+
+**完成内容**:
+1. 保留了原有的`start_display()`方法（传统窗口显示模式）
+2. 新增了`generate_frames()`生成器方法:
+   - 功能：产生MJPEG流格式的帧数据，适用于Web流媒体传输
+   - 使用`cv2.imencode('.jpg', frame)`将帧编码为JPEG格式
+   - 使用`yield`返回符合MJPEG流协议的帧数据
+   - 返回格式：`b'--frame\r\n' + b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n'`
+
+**使用方法**:
+```python
+# 创建录制器实例
+recorder = ScreenRecorder()
+
+# 传统窗口显示
+recorder.start_display()
+
+# 生成MJPEG流（用于Web服务）
+for frame_data in recorder.generate_frames():
+    # frame_data是MJPEG流格式的字节数据
+    # 可以直接用于Flask/FastAPI等Web框架的流媒体响应
+    pass
+```
+
+**技术亮点**:
+- 支持两种显示模式：传统窗口和Web流媒体
+- 生成器模式节省内存，适合长时间流媒体传输
+- 符合MJPEG流协议标准，可直接用于Web浏览器
+- 保持了原有功能的完整性
+- 适用于实时Web监控、远程桌面等应用场景

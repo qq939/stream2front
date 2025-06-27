@@ -44,7 +44,7 @@ class ScreenRecorder:
         print(f"屏幕尺寸: {self.screen_size}")
         
     def start_display(self):
-        """开始屏幕实时显示"""
+        """开始屏幕实时显示（传统窗口模式）"""
         if self.is_running:
             print("屏幕显示已在运行中")
             return
@@ -87,6 +87,51 @@ class ScreenRecorder:
             self.stop_display()
         except Exception as e:
             print(f"发生错误: {e}")
+            self.stop_display()
+    
+    def generate_frames(self):
+        """生成器：产生MJPEG流格式的帧数据
+        
+        Yields:
+            bytes: MJPEG流格式的帧数据，适用于Web流媒体传输
+        """
+        try:
+            self._initialize_capture()
+            self.is_running = True
+            
+            print("开始生成MJPEG流")
+            print(f"帧率: {self.fps} FPS")
+            
+            while self.is_running:
+                # 使用mss截取屏幕
+                screenshot = self.sct.grab(self.monitor)
+                
+                # 转换为numpy数组
+                frame = np.array(screenshot)
+                
+                # mss返回的是BGRA格式，转换为BGR
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+                
+                # 调整显示大小
+                resized_frame = cv2.resize(frame, self.display_size)
+                
+                # 编码为JPEG格式
+                ret, buffer = cv2.imencode('.jpg', resized_frame)
+                if not ret:
+                    continue
+                    
+                frame_bytes = buffer.tobytes()
+                
+                # 使用yield返回每个帧，格式为MJPEG流
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+                
+                # 控制帧率
+                time.sleep(1/self.fps)
+                
+        except Exception as e:
+            print(f"生成帧时发生错误: {e}")
+        finally:
             self.stop_display()
             
     def stop_display(self):

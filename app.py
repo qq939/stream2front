@@ -15,6 +15,12 @@ def video_feed():
     return Response(recorder.generate_frames(),
                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/api/v1/screenshot')
+def screenshot():
+    """截图端点"""
+    return Response(recorder.screenshot(),
+                   mimetype='image/png')
+
 if __name__ == '__main__':
     print("启动屏幕录制Web服务...")
     print("访问 http://localhost:8080 查看屏幕录制")

@@ -66,6 +66,37 @@ python screen_recorder.py
 - 现在脚本只进行屏幕实时显示，不会生成任何视频文件
 - 性能更好，因为不需要写入磁盘
 - 适合用于屏幕监控或实时预览
+
+---
+
+### 时间: 2024-12-19 当前时间
+**用户问题**: 写成一个类，在init里配置参数
+
+**完成内容**:
+1. 将screen_recorder.py重构为面向对象的类实现:
+   - 创建ScreenRecorder类
+   - 在__init__方法中配置所有参数
+   - 添加多个实用方法
+
+**类的主要功能**:
+- `__init__(fps, display_size, monitor_index, window_name)`: 初始化配置参数
+- `start_display()`: 开始屏幕实时显示
+- `stop_display()`: 停止屏幕显示
+- `set_fps(fps)`: 动态设置帧率
+- `set_display_size(width, height)`: 设置显示窗口大小
+- `get_screen_info()`: 获取屏幕信息
+
+**可配置参数**:
+- fps: 帧率(默认20.0)
+- display_size: 显示窗口大小(默认800x600)
+- monitor_index: 显示器索引(默认1为主显示器)
+- window_name: 窗口名称(默认'Screen Display')
+
+**使用示例**:
+```python
+recorder = ScreenRecorder(fps=25.0, display_size=(1024, 768))
+recorder.start_display()
+```
 3. 安装了mss==10.0.0依赖包
 
 **mss库优势**:

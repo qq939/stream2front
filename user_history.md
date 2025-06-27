@@ -97,6 +97,40 @@ python screen_recorder.py
 recorder = ScreenRecorder(fps=25.0, display_size=(1024, 768))
 recorder.start_display()
 ```
+
+---
+
+### 时间: 2024-12-19 当前时间
+**用户问题**: 增加类函数screenshot, 取当前最后一帧
+
+**完成内容**:
+1. 在ScreenRecorder类中新增screenshot方法:
+   - 获取当前屏幕截图的BGR格式图像数组
+   - 支持在显示运行中或停止状态下都能截图
+   - 自动处理mss对象的创建和释放
+   - 包含完整的异常处理
+
+2. 额外增加save_screenshot方法:
+   - 保存截图到文件
+   - 支持自定义文件名或自动生成时间戳文件名
+   - 默认保存为PNG格式
+
+**新增方法说明**:
+- `screenshot()`: 返回numpy.ndarray格式的BGR图像数组
+- `save_screenshot(filename=None)`: 保存截图到文件，返回文件路径
+
+**使用示例**:
+```python
+# 获取截图数组
+frame = recorder.screenshot()
+if frame is not None:
+    print(f"截图尺寸: {frame.shape}")
+
+# 保存截图到文件
+filename = recorder.save_screenshot("my_screenshot.png")
+if filename:
+    print(f"截图已保存到: {filename}")
+```
 3. 安装了mss==10.0.0依赖包
 
 **mss库优势**:

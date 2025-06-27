@@ -131,6 +131,62 @@ class ScreenRecorder:
                 'left': self.monitor['left'],
                 'top': self.monitor['top']
             }
+    
+    def screenshot(self):
+        """获取当前屏幕截图
+        
+        Returns:
+            numpy.ndarray: BGR格式的图像数组，如果失败返回None
+        """
+        try:
+            # 如果没有初始化mss对象，临时创建一个
+            if not self.sct:
+                temp_sct = mss.mss()
+                monitor = temp_sct.monitors[self.monitor_index]
+                
+                # 截取屏幕
+                screenshot = temp_sct.grab(monitor)
+                temp_sct.close()
+            else:
+                # 使用已有的mss对象
+                screenshot = self.sct.grab(self.monitor)
+            
+            # 转换为numpy数组
+            frame = np.array(screenshot)
+            
+            # mss返回的是BGRA格式，转换为BGR
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+            
+            return frame
+            
+        except Exception as e:
+            print(f"截图失败: {e}")
+            return None
+    
+    def save_screenshot(self, filename=None):
+        """保存当前屏幕截图到文件
+        
+        Args:
+            filename (str, optional): 保存的文件名，如果不提供则自动生成
+            
+        Returns:
+            str: 保存的文件路径，如果失败返回None
+        """
+        frame = self.screenshot()
+        if frame is None:
+            return None
+            
+        if filename is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"screenshot_{timestamp}.png"
+            
+        try:
+            cv2.imwrite(filename, frame)
+            print(f"截图已保存: {filename}")
+            return filename
+        except Exception as e:
+            print(f"保存截图失败: {e}")
+            return None
 
 
 if __name__ == "__main__":

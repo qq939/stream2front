@@ -6,7 +6,6 @@
 """
 
 from flask import Flask, Response, render_template, jsonify, request
-from screen_recorder import ScreenRecorder
 import cv2
 import io
 import threading
@@ -18,7 +17,6 @@ from datetime import datetime
 app = Flask(__name__)
 
 # 全局变量
-recorder = ScreenRecorder()
 frame_queue = queue.Queue(maxsize=10)  # 帧队列，用于存储客户端推送的帧
 current_frame = None
 frame_lock = threading.Lock()
@@ -45,11 +43,11 @@ def video_feed():
                     # 使用客户端推送的帧
                     frame = current_frame.copy()
                 else:
-                    # 如果没有客户端推流，使用本地屏幕录制
-                    frame = recorder.screenshot()
-                    if frame is None:
-                        time.sleep(0.1)
-                        continue
+                    # 如果没有客户端推流，返回黑屏或等待
+                    frame = np.zeros((600, 800, 3), dtype=np.uint8)
+                    # 在黑屏上添加提示文字
+                    cv2.putText(frame, 'Waiting for client stream...', (200, 300), 
+                               cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
             
             # 调整帧大小
             frame = cv2.resize(frame, (800, 600))
@@ -86,11 +84,10 @@ def screenshot():
                 # 使用客户端推送的最新帧
                 img_array = current_frame.copy()
             else:
-                # 如果没有客户端推流，使用本地屏幕录制
-                img_array = recorder.screenshot()
-                
-        if img_array is None:
-            return Response("截图失败", status=500)
+                # 如果没有客户端推流，返回黑屏
+                img_array = np.zeros((600, 800, 3), dtype=np.uint8)
+                cv2.putText(img_array, 'No client stream available', (200, 300), 
+                           cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
         
         # 将numpy数组编码为PNG格式
         ret, buffer = cv2.imencode('.png', img_array)

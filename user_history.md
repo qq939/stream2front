@@ -52,6 +52,25 @@ python screen_recorder.py
 ---
 
 ### 时间: 2024-12-19 当前时间
+**用户问题**: server.py不要用ScreenRecorder模块，api接口采用/api/v1/push_frame读取的数据处理。
+
+**完成内容**:
+1. 修改server.py文件，移除ScreenRecorder模块依赖:
+   - 删除`from screen_recorder import ScreenRecorder`导入
+   - 删除`recorder = ScreenRecorder()`全局变量
+   - 修改video_feed接口逻辑，当没有客户端推流时显示黑屏和等待提示
+   - 修改screenshot接口逻辑，当没有客户端推流时返回带提示文字的黑屏
+   - 完全依赖/api/v1/push_frame接口接收客户端推送的帧数据
+
+**技术改进**:
+- 服务端不再依赖本地屏幕录制功能
+- 完全基于客户端推流的架构
+- 当无推流时提供友好的视觉反馈
+- 保持所有API接口的兼容性
+
+---
+
+### 时间: 2024-12-19 当前时间
 **用户问题**: 不用写存储文件
 
 **完成内容**:

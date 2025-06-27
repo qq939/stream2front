@@ -19,17 +19,11 @@ def record_screen():
         screen_size = (monitor['width'], monitor['height'])
         print(f"屏幕尺寸: {screen_size}")
         
-        # 设置录制参数
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        output_file = f"screen_recording_{timestamp}.mp4"
+        # 设置显示参数
         fps = 20.0
         
-        # 创建VideoWriter对象
-        out = cv2.VideoWriter(output_file, fourcc, fps, screen_size)
-        
-        print(f"开始录制屏幕，输出文件: {output_file}")
-        print("按 'q' 键停止录制")
+        print("开始屏幕实时显示")
+        print("按 'q' 键停止显示")
         
         try:
             while True:
@@ -42,8 +36,7 @@ def record_screen():
                 # mss返回的是BGRA格式，转换为BGR
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
                 
-                # 写入视频文件
-                out.write(frame)
+                # 不保存文件，只显示
                 
                 # 显示当前帧（可选，会影响性能）
                 cv2.imshow('Screen Recording', cv2.resize(frame, (800, 600)))
@@ -60,9 +53,8 @@ def record_screen():
         
         finally:
             # 释放资源
-            out.release()
             cv2.destroyAllWindows()
-            print(f"录制完成，文件保存为: {output_file}")
+            print("屏幕显示已停止")
 
 if __name__ == "__main__":
     record_screen()

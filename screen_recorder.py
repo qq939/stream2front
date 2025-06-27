@@ -46,7 +46,7 @@ def record_screen():
                 out.write(frame)
                 
                 # 显示当前帧（可选，会影响性能）
-                # cv2.imshow('Screen Recording', cv2.resize(frame, (800, 600)))
+                cv2.imshow('Screen Recording', cv2.resize(frame, (800, 600)))
                 
                 # 检查是否按下'q'键
                 if cv2.waitKey(1) & 0xFF == ord('q'):

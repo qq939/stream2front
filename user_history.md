@@ -60,3 +60,27 @@ python screen_recorder.py
 - 输入`mss.`后按Tab可看到所有mss方法
 - 输入`sct.`后按Tab可看到截图对象的所有属性
 - 使用`Cmd + Click`可跳转到mss库的定义
+
+---
+
+### 时间: 当前时间
+**用户问题**: git ignore screen_recording_开头的文件
+
+**完成内容**:
+1. 创建了.gitignore文件，包含以下规则:
+   - `screen_recording_*.mp4` - 忽略所有录制生成的视频文件
+   - `__pycache__/` 和 `*.py[cod]` - 忽略Python缓存文件
+   - `.venv/` - 忽略虚拟环境目录
+   - `.vscode/` 和 `.idea/` - 忽略IDE配置文件
+   - `.DS_Store` - 忽略macOS系统文件
+
+**Git忽略文件的好处**:
+- 避免将大型视频文件提交到仓库
+- 保持仓库干净，只包含源代码
+- 减少仓库大小和克隆时间
+- 避免不必要的文件冲突
+
+**VSCode Git操作提示**:
+- `Cmd + Shift + G`: 打开Git面板
+- 在Source Control面板中可以看到被忽略的文件会变灰
+- 使用`git status`命令验证忽略规则是否生效

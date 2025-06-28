@@ -691,3 +691,32 @@ python client.py --fps 10 --quality 50
    - 确保Vercel能够正确识别和运行应用
 
 **根本原因**: vercel.json配置错误导致Vercel无法找到正确的入口文件
+
+---
+
+### 时间: 2025-01-29 14:20
+**用户问题**: 将入口设置为 server.py，但 Vercel 部署抛出 500 错误：FUNCTION_INVOCATION_FAILED
+
+**问题诊断**:
+1. **WSGI 应用导出问题**：
+   - server.py 缺少 Vercel 需要的 WSGI 应用导出
+   - Flask 应用在 `if __name__ == '__main__':` 块中运行，Vercel 环境中不会被执行
+   - 路由配置需要前缀斜杠
+
+**修复内容**:
+1. **修改 vercel.json 配置**：
+   - 将 `routes.dest` 从 `server.py` 改为 `/server.py`
+   - 保持 `builds.src` 为 `server.py`
+
+2. **修改 server.py 文件**：
+   - 添加 Vercel WSGI 应用导出
+   - 添加 `handler` 函数用于处理请求
+   - 添加 `vercel_app` 变量导出 Flask 应用
+
+3. **验证依赖文件**：
+   - 确认 requirements.txt 包含必要依赖：Flask, Pillow, requests
+
+**修复结果**:
+- 已完成 Vercel 配置修复
+- 已添加正确的 WSGI 应用导出
+- 准备提交并推送到 GitHub

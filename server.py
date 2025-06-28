@@ -269,6 +269,14 @@ def internal_error(error):
 # Vercel serverless function entry point
 app.config['ENV'] = 'production'
 
+# Export the Flask app for Vercel
+# This is required for Vercel to recognize the WSGI application
+def handler(request):
+    return app(request.environ, request.start_response)
+
+# For Vercel deployment
+vercel_app = app
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='屏幕录制服务端')
     parser.add_argument('--port', '-p', type=int, default=8080,

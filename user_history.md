@@ -613,3 +613,26 @@ python client.py --fps 10 --quality 50
 - 修复了vercel.json配置冲突
 - 大幅减小了serverless函数的部署包大小
 - 现在应该能够成功通过Vercel的250MB大小限制
+
+---
+
+### 时间: 2024-06-28 16:09
+**用户问题**: 这是vercel部署的界面，看起来是404啊
+
+**问题分析**:
+1. Vercel部署出现404错误
+2. 检查了vercel.json配置，指向api/index.py
+3. 发现api/index.py导入server模块正确
+4. 但模板文件index.html中使用了错误的路由引用
+
+**修复内容**:
+1. 修复了api/index.py文件，添加了正确的WSGI处理函数
+2. 修复了templates/index.html中的路由引用:
+   - 将`{{ url_for('video_feed') }}`改为`/api/v1/video_feed`
+   - 因为server.py中定义的是`/api/v1/video_feed`路由，不是`video_feed`
+
+**VSCode快捷键提示**:
+- `Cmd + P`: 快速打开文件
+- `Cmd + Shift + F`: 全局搜索
+- `Cmd + G`: 跳转到指定行
+- `Cmd + Click`: 跳转到定义

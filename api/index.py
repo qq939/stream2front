@@ -14,3 +14,8 @@ from server import app
 
 # 导出app供Vercel使用
 # Vercel会自动处理WSGI应用
+def handler(request):
+    return app(request.environ, lambda status, headers: None)
+
+# 也可以直接导出app
+app = app

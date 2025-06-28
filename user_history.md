@@ -783,3 +783,49 @@ python client.py --fps 10 --quality 50
 - `client.py`: 优化连接逻辑，添加诊断功能
 - `requirements.txt`: 添加 opencv-python 依赖
 - `user_history.md`: 更新问题记录
+
+## 2025-01-28 - API路径修复
+
+### 问题描述
+用户报告诊断结果显示：
+```
+基本连接: HTTP 200
+健康检查: HTTP 200
+✓ 健康检查通过
+状态接口: HTTP 404
+✗ 状态接口失败: {"error":"接口不存在"}
+```
+
+### 问题诊断
+通过检查服务端代码发现API路径不匹配：
+1. **服务端路径**: `/api/v1/status` 和 `/api/v1/push_frame`
+2. **客户端路径**: `/status` 和 `/push`
+3. **路径不一致**: 导致客户端无法正确访问服务端API
+
+### 修复内容
+修正客户端API路径配置：
+- `push_url`: `/push` → `/api/v1/push_frame`
+- `status_url`: `/status` → `/api/v1/status`
+- `health_url`: `/health` (保持不变)
+
+### 修复结果
+修复后诊断结果：
+```
+基本连接: HTTP 200
+健康检查: HTTP 200
+✓ 健康检查通过
+状态接口: HTTP 200
+✓ 状态接口正常
+```
+
+连接测试成功：
+```
+✓ 服务端连接成功
+  服务端状态: running
+  服务端时间: 2025-06-28T10:20:34.850198
+连接测试成功！
+```
+
+### 修改文件
+- `client.py`: 修正API路径配置
+- `user_history.md`: 更新问题记录

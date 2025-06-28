@@ -28,8 +28,8 @@ class StreamClient:
             quality (int): JPEG压缩质量 (1-100)
         """
         self.server_url = server_url.rstrip('/')
-        self.push_url = f"{self.server_url}/push"
-        self.status_url = f"{self.server_url}/status"
+        self.push_url = f"{self.server_url}/api/v1/push_frame"
+        self.status_url = f"{self.server_url}/api/v1/status"
         self.health_url = f"{self.server_url}/health"
         self.fps = fps
         self.quality = quality

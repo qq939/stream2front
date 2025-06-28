@@ -6,12 +6,10 @@
 """
 
 from flask import Flask, Response, render_template, jsonify, request
-import ffmpeg
 import io
 import threading
 import time
 import queue
-import numpy as np
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 import base64
@@ -47,22 +45,17 @@ def create_placeholder_image(width, height, text):
     # 绘制文字
     draw.text((x, y), text, fill='white', font=font)
     
-    # 转换为numpy数组 (RGB -> BGR for compatibility)
-    return np.array(img)[:, :, ::-1]
+    # 直接返回PIL Image对象
+    return img
 
 def encode_frame_to_jpeg(frame, size=None):
-    """将numpy数组编码为JPEG字节"""
+    """将PIL Image编码为JPEG字节"""
     try:
-        # 如果frame是numpy数组，转换为PIL Image
-        if isinstance(frame, np.ndarray):
-            # BGR -> RGB
-            if len(frame.shape) == 3 and frame.shape[2] == 3:
-                frame_rgb = frame[:, :, ::-1]
-            else:
-                frame_rgb = frame
-            img = Image.fromarray(frame_rgb.astype('uint8'))
-        else:
-            img = frame
+        # 确保frame是PIL Image对象
+        if not isinstance(frame, Image.Image):
+            return None
+            
+        img = frame
         
         # 调整大小
         if size:
@@ -77,18 +70,13 @@ def encode_frame_to_jpeg(frame, size=None):
         return None
 
 def encode_frame_to_png(frame):
-    """将numpy数组编码为PNG字节"""
+    """将PIL Image编码为PNG字节"""
     try:
-        # 如果frame是numpy数组，转换为PIL Image
-        if isinstance(frame, np.ndarray):
-            # BGR -> RGB
-            if len(frame.shape) == 3 and frame.shape[2] == 3:
-                frame_rgb = frame[:, :, ::-1]
-            else:
-                frame_rgb = frame
-            img = Image.fromarray(frame_rgb.astype('uint8'))
-        else:
-            img = frame
+        # 确保frame是PIL Image对象
+        if not isinstance(frame, Image.Image):
+            return None
+            
+        img = frame
         
         # 编码为PNG
         buffer = io.BytesIO()
@@ -99,7 +87,7 @@ def encode_frame_to_png(frame):
         return None
 
 def decode_image_bytes(image_bytes):
-    """解码图像字节为numpy数组"""
+    """解码图像字节为PIL Image"""
     try:
         # 使用PIL解码图像
         img = Image.open(io.BytesIO(image_bytes))
@@ -108,9 +96,8 @@ def decode_image_bytes(image_bytes):
         if img.mode != 'RGB':
             img = img.convert('RGB')
         
-        # 转换为numpy数组 (RGB -> BGR for compatibility)
-        frame = np.array(img)[:, :, ::-1]
-        return frame
+        # 直接返回PIL Image对象
+        return img
     except Exception as e:
         print(f"图像解码错误: {e}")
         return None
@@ -178,7 +165,7 @@ def screenshot():
                 # 如果没有客户端推流，返回黑屏
                 img_array = create_placeholder_image(800, 600, 'No client stream available')
         
-        # 将numpy数组编码为PNG格式
+        # 将PIL Image编码为PNG格式
         try:
             img_bytes = encode_frame_to_png(img_array)
             if img_bytes is None:

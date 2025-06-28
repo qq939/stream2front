@@ -10,5 +10,22 @@
       "src": "/(.*)",
       "dest": "/api/index"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.py": {
+      "excludeFiles": [
+        "screen_recorder.py",
+        "client.py",
+        "app.py",
+        "user_history.md",
+        "README.md",
+        ".gitignore",
+        "**/*.pyc",
+        "**/__pycache__/**",
+        "**/.pytest_cache/**",
+        "**/tests/**",
+        "**/test_*"
+      ]
+    }
+  }
 }

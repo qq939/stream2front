@@ -741,3 +741,45 @@ python client.py --fps 10 --quality 50
 **修复结果**:
 - 已简化 WSGI 应用导出方式
 - 准备提交并推送到 GitHub
+
+---
+
+## 2025-01-28 - 客户端连接超时问题诊断
+
+### 问题描述
+用户报告客户端无法推流，连接服务端超时：
+```
+✗ 无法连接到服务端: HTTPSConnectionPool(host='stream2front-ie8082i46-jiangjims-projects.vercel.app', port=443): Read timed out. (read timeout=5)
+```
+
+### 问题诊断
+通过诊断功能发现问题根源：
+1. **Vercel SSO 认证问题**: 服务端返回 HTTP 401，检测到 Vercel SSO 认证页面
+2. **项目访问权限**: 项目可能被设置为私有或需要认证
+3. **连接超时**: 原始超时时间过短，不适应 Vercel 冷启动
+
+### 修复内容
+1. **优化客户端连接逻辑**:
+   - 增加重试机制 (3次重试)
+   - 延长超时时间 (5秒 -> 15秒)
+   - 增加冷启动等待时间
+   - 添加详细的错误信息和重试提示
+
+2. **添加诊断功能**:
+   - 新增 `diagnose_server()` 方法
+   - 检测 Vercel SSO 认证页面
+   - 提供具体的解决方案指导
+   - 支持 `-d` 参数进行独立诊断
+
+3. **优化推流超时**: 将推流请求超时从 2秒 增加到 10秒
+
+### 解决方案指导
+用户需要在 Vercel Dashboard 中：
+1. 登录 Vercel Dashboard
+2. 进入项目设置 -> Functions
+3. 确保项目访问权限设置为 Public
+
+### 修改文件
+- `client.py`: 优化连接逻辑，添加诊断功能
+- `requirements.txt`: 添加 opencv-python 依赖
+- `user_history.md`: 更新问题记录

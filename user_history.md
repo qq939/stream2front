@@ -536,3 +536,38 @@ python client.py --fps 10 --quality 50
 └── templates/
     └── index.html        # 前端模板
 ```
+
+---
+
+### 时间: 2024-12-19 当前时间
+**用户问题**: The `functions` property cannot be used in conjunction with the `builds` property. Please remove one of them.
+
+**完成内容**:
+1. **修复vercel.json配置错误**:
+   - 移除了与`builds`属性冲突的`functions`属性
+   - 保留了`builds`配置，因为这是部署Python应用的标准方式
+   - 简化了配置文件，避免了Vercel部署时的冲突
+
+**技术说明**:
+- 在Vercel中，`builds`和`functions`属性不能同时使用
+- `builds`属性用于传统的构建配置
+- `functions`属性用于新的函数配置格式
+- 对于Python Flask应用，使用`builds`配置更为合适
+
+**修复后的vercel.json**:
+```json
+{
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/index"
+    }
+  ]
+}
+```

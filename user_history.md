@@ -668,3 +668,26 @@ python client.py --fps 10 --quality 50
 - 添加健康检查端点
 - 集成应用性能监控
 - 配置自动化测试
+
+---
+
+### 时间: 2024-06-28 16:11
+**用户问题**: 我的意思是这个部署界面是404，你知道问题出在哪里？ `https://stream2front.vercel.app/`
+
+**问题诊断**:
+1. 检查vercel.json配置发现严重错误:
+   - builds指向"server.py"但routes指向"sever.py"（拼写错误）
+   - 缺少api/index.py入口文件
+   - 路由配置不正确
+
+**修复内容**:
+1. 修复vercel.json配置:
+   - 将builds的src改为"api/index.py"
+   - 将routes的dest改为"/api/index"
+   - 修复拼写错误
+2. 创建api目录和index.py入口文件:
+   - 正确导入server模块中的Flask应用
+   - 添加WSGI处理函数
+   - 确保Vercel能够正确识别和运行应用
+
+**根本原因**: vercel.json配置错误导致Vercel无法找到正确的入口文件

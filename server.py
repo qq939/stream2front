@@ -147,6 +147,10 @@ def video_feed():
     return Response(generate(),
                    mimetype='multipart/x-mixed-replace; boundary=frame')
 
+@app.route('/health')
+def health_check():
+    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 @app.route('/api/v1/screenshot', methods=['GET'])
 def screenshot():
     """截图API接口

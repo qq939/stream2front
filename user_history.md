@@ -571,3 +571,45 @@ python client.py --fps 10 --quality 50
   ]
 }
 ```
+
+---
+
+### 时间: 2024-12-19 当前时间
+**用户问题**: The `functions` property cannot be used in conjunction with the `builds` property. Please remove one of them.
+
+**完成内容**:
+1. **再次修复vercel.json配置错误**:
+   - 移除了与`builds`属性冲突的`functions`属性
+   - 保留了`builds`配置，这是部署Python应用的标准方式
+   - 清理了配置文件，确保Vercel部署时不会出现属性冲突
+
+**技术说明**:
+- Vercel不允许在同一个配置文件中同时使用`builds`和`functions`属性
+- `builds`属性适用于传统的构建和部署流程
+- `functions`属性是较新的函数配置格式
+- 对于我们的Python Flask应用，`builds`配置更为稳定和合适
+
+**最终的vercel.json配置**:
+```json
+{
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/api/index"
+    }
+  ]
+}
+```
+
+**部署优化总结**:
+- 移除了重型依赖包（numpy、opencv、ffmpeg等）
+- 简化了代码实现，只使用PIL进行图像处理
+- 修复了vercel.json配置冲突
+- 大幅减小了serverless函数的部署包大小
+- 现在应该能够成功通过Vercel的250MB大小限制

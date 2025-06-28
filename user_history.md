@@ -720,3 +720,24 @@ python client.py --fps 10 --quality 50
 - 已完成 Vercel 配置修复
 - 已添加正确的 WSGI 应用导出
 - 准备提交并推送到 GitHub
+
+---
+
+### 时间: 2025-01-29 14:25
+**用户问题**: 部署错误500，错误日志 `https://vercel.com/jiangjims-projects/stream2front/47KkWCR57fzWMsquUN3D6fPKdEcs/logs??requestIds=sfo1%3A%3Agnswf-1751104493135-fb5c101c8173`
+
+**问题诊断**:
+1. **WSGI 应用导出方式错误**：
+   - 之前添加的 `handler` 函数和 `vercel_app` 变量不符合 Vercel 标准
+   - Vercel 期望直接使用 Flask 应用实例，而不是自定义包装函数
+   - 需要确保 Flask 应用的 WSGI 接口正确暴露
+
+**修复内容**:
+1. **简化 WSGI 应用导出**：
+   - 移除不必要的 `handler` 函数
+   - 移除 `vercel_app` 变量
+   - 确保 Flask 应用的 `wsgi_app` 属性正确设置
+
+**修复结果**:
+- 已简化 WSGI 应用导出方式
+- 准备提交并推送到 GitHub

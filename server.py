@@ -271,11 +271,8 @@ app.config['ENV'] = 'production'
 
 # Export the Flask app for Vercel
 # This is required for Vercel to recognize the WSGI application
-def handler(request):
-    return app(request.environ, request.start_response)
-
-# For Vercel deployment
-vercel_app = app
+# Vercel expects the Flask app to be available as a callable
+app.wsgi_app = app.wsgi_app
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='屏幕录制服务端')

@@ -491,3 +491,48 @@ python client.py --fps 10 --quality 50
 - `Shift + Option + ↓` - 复制行
 - `Cmd + D` - 选择相同单词
 - `Tab` - 代码自动补全
+
+---
+
+### 时间: 2024-12-19 当前时间
+**用户问题**: 尝试server端配置在vercel，检查vercel.json
+
+**完成内容**:
+1. **检查并修复server.py**:
+   - 添加缺失的argparse和os模块导入
+   - 修复argparse.ArgumentParser初始化
+   - 添加Vercel生产环境配置
+
+2. **优化vercel.json配置**:
+   - 移除不适合serverless的自定义启动命令
+   - 简化构建配置，移除runtime指定
+   - 添加函数超时配置(30秒)
+   - 更新路由配置指向新的API入口
+
+3. **创建Vercel API入口**:
+   - 创建`/api/index.py`作为serverless函数入口
+   - 正确导入Flask应用
+   - 配置Python路径以支持项目结构
+
+4. **Vercel部署优化**:
+   - 使用标准的Vercel Python运行时
+   - 配置适合serverless环境的路由
+   - 确保依赖项在requirements.txt中完整
+
+**技术要点**:
+- Vercel serverless函数不支持长时间运行的进程
+- 需要将Flask应用适配为WSGI兼容格式
+- 视频流功能在serverless环境中可能有限制
+- 建议考虑使用WebSocket或其他实时通信方案
+
+**部署结构**:
+```
+/
+├── api/
+│   └── index.py          # Vercel入口点
+├── server.py             # Flask应用主体
+├── vercel.json           # Vercel配置
+├── requirements.txt      # Python依赖
+└── templates/
+    └── index.html        # 前端模板
+```

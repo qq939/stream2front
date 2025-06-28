@@ -15,6 +15,8 @@ import numpy as np
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 import base64
+import argparse
+import os
 
 app = Flask(__name__)
 
@@ -273,7 +275,11 @@ def internal_error(error):
     """500错误处理"""
     return jsonify({'error': '服务器内部错误'}), 500
 
+# Vercel serverless function entry point
+app.config['ENV'] = 'production'
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='屏幕录制服务端')
     parser.add_argument('--port', '-p', type=int, default=8080,
                        help='服务端监听端口 (默认: 8080)')
     args = parser.parse_args()

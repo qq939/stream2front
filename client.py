@@ -18,7 +18,7 @@ import io
 class StreamClient:
     """推流客户端类"""
     
-    def __init__(self, server_url="http://localhost:8080", fps=20, quality=80, max_width=1280):
+    def __init__(self, server_url="http://localhost:8080", fps=20, quality=80):
         """
         初始化推流客户端
         
@@ -26,133 +26,43 @@ class StreamClient:
             server_url (str): 服务端URL地址
             fps (int): 推流帧率
             quality (int): JPEG压缩质量 (1-100)
-            max_width (int): 最大图像宽度，用于控制传输数据量
         """
         self.server_url = server_url.rstrip('/')
         self.push_url = f"{self.server_url}/api/v1/push_frame"
         self.status_url = f"{self.server_url}/api/v1/status"
-        self.health_url = f"{self.server_url}/health"
         self.fps = fps
         self.quality = quality
-        self.max_width = max_width
         self.is_streaming = False
         self.recorder = ScreenRecorder(fps=fps)
-        
-        # 优化session配置
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'StreamClient/1.0',
-            'Connection': 'keep-alive'
-        })
-        
         self.stats = {
             'frames_sent': 0,
             'frames_failed': 0,
             'start_time': None,
-            'last_success': None,
-            'total_bytes_sent': 0,
-            'avg_frame_size': 0
+            'last_success': None
         }
         
-    def test_connection(self, retries=3):
+    def test_connection(self):
         """测试与服务端的连接
         
-        Args:
-            retries (int): 重试次数
-            
         Returns:
             bool: 连接是否成功
         """
-        for attempt in range(retries):
-            try:
-                print(f"尝试连接服务端... (第 {attempt + 1}/{retries} 次)")
-                
-                # 增加超时时间，适应 Vercel 冷启动
-                response = self.session.get(self.status_url, timeout=15)
-                
-                if response.status_code == 200:
-                    try:
-                        server_info = response.json()
-                        print(f"✓ 服务端连接成功")
-                        print(f"  服务端状态: {server_info.get('status', 'unknown')}")
-                        print(f"  服务端时间: {server_info.get('timestamp', 'unknown')}")
-                        return True
-                    except ValueError:
-                        print(f"✗ 服务端响应格式错误，可能是认证页面")
-                        print(f"  响应内容: {response.text[:200]}...")
-                        return False
-                else:
-                    print(f"✗ 服务端响应错误: {response.status_code}")
-                    if attempt < retries - 1:
-                        print(f"等待 3 秒后重试...")
-                        time.sleep(3)
-                    
-            except requests.exceptions.Timeout:
-                print(f"✗ 连接超时 (可能是 Vercel 冷启动)")
-                if attempt < retries - 1:
-                    print(f"等待 5 秒后重试...")
-                    time.sleep(5)
-                    
-            except requests.exceptions.RequestException as e:
-                print(f"✗ 无法连接到服务端: {e}")
-                if attempt < retries - 1:
-                    print(f"等待 3 秒后重试...")
-                    time.sleep(3)
-                    
-        return False
-    
-    def diagnose_server(self):
-        """诊断服务端部署问题"""
-        print("\n=== 服务端诊断 ===")
-        
-        # 检查基本连接
         try:
-            response = self.session.get(self.server_url, timeout=10)
-            print(f"基本连接: HTTP {response.status_code}")
-            
-            # 检查是否是 Vercel 认证页面
-            if "vercel.com/sso-api" in response.text:
-                print("⚠️  检测到 Vercel SSO 认证页面")
-                print("   问题: 项目可能被设置为私有或需要认证")
-                print("   解决方案:")
-                print("   1. 登录 Vercel Dashboard")
-                print("   2. 进入项目设置 -> Functions")
-                print("   3. 确保项目访问权限设置为 Public")
+            response = self.session.get(self.status_url, timeout=5)
+            if response.status_code == 200:
+                server_info = response.json()
+                print(f"✓ 服务端连接成功")
+                print(f"  服务端状态: {server_info.get('status', 'unknown')}")
+                print(f"  服务端时间: {server_info.get('timestamp', 'unknown')}")
+                return True
+            else:
+                print(f"✗ 服务端响应错误: {response.status_code}")
                 return False
-                
-        except Exception as e:
-            print(f"基本连接失败: {e}")
-            
-        # 检查健康检查接口
-        try:
-            response = self.session.get(self.health_url, timeout=10)
-            print(f"健康检查: HTTP {response.status_code}")
-            if response.status_code == 200:
-                print("✓ 健康检查通过")
-            else:
-                print(f"✗ 健康检查失败: {response.text[:100]}")
-        except Exception as e:
-            print(f"健康检查失败: {e}")
-            
-        # 检查状态接口
-        try:
-            response = self.session.get(self.status_url, timeout=10)
-            print(f"状态接口: HTTP {response.status_code}")
-            if response.status_code == 200:
-                print("✓ 状态接口正常")
-                try:
-                    data = response.json()
-                    print(f"  服务状态: {data}")
-                except:
-                    print(f"  响应内容: {response.text[:100]}")
-            else:
-                print(f"✗ 状态接口失败: {response.text[:100]}")
-        except Exception as e:
-            print(f"状态接口失败: {e}")
-            
-        print("=== 诊断完成 ===\n")
-        return True
-     
+        except requests.exceptions.RequestException as e:
+            print(f"✗ 无法连接到服务端: {e}")
+            return False
+    
     def start_streaming(self):
         """开始推流"""
         if self.is_streaming:
@@ -229,36 +139,21 @@ class StreamClient:
             bool: 发送是否成功
         """
         try:
-            # 调整图像尺寸以减少传输数据量
-            height, width = frame.shape[:2]
-            if width > self.max_width:
-                scale = self.max_width / width
-                new_width = self.max_width
-                new_height = int(height * scale)
-                frame = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
-            
             # 编码为JPEG
             ret, buffer = cv2.imencode('.jpg', frame, 
                                      [cv2.IMWRITE_JPEG_QUALITY, self.quality])
             if not ret:
                 return False
             
-            frame_bytes = buffer.tobytes()
-            frame_size = len(frame_bytes)
-            
             # 准备文件数据
             files = {
-                'frame': ('frame.jpg', frame_bytes, 'image/jpeg')
+                'frame': ('frame.jpg', buffer.tobytes(), 'image/jpeg')
             }
             
-            # 发送POST请求，优化超时设置
-            response = self.session.post(self.push_url, files=files, timeout=8)
+            # 发送POST请求
+            response = self.session.post(self.push_url, files=files, timeout=2)
             
             if response.status_code == 200:
-                # 更新统计信息
-                self.stats['total_bytes_sent'] += frame_size
-                total_frames = self.stats['frames_sent'] + 1
-                self.stats['avg_frame_size'] = self.stats['total_bytes_sent'] / total_frames
                 return True
             else:
                 print(f"服务端响应错误: {response.status_code}")
@@ -288,19 +183,11 @@ class StreamClient:
         success_rate = (self.stats['frames_sent'] / total_frames * 100) if total_frames > 0 else 0
         avg_fps = self.stats['frames_sent'] / elapsed.total_seconds() if elapsed.total_seconds() > 0 else 0
         
-        # 计算传输速率
-        avg_frame_kb = self.stats['avg_frame_size'] / 1024 if self.stats['avg_frame_size'] > 0 else 0
-        total_mb = self.stats['total_bytes_sent'] / (1024 * 1024)
-        transfer_rate_mbps = total_mb / elapsed.total_seconds() if elapsed.total_seconds() > 0 else 0
-        
         print(f"\n📊 推流统计 (运行时间: {str(elapsed).split('.')[0]})")
         print(f"   成功帧数: {self.stats['frames_sent']}")
         print(f"   失败帧数: {self.stats['frames_failed']}")
         print(f"   成功率: {success_rate:.1f}%")
-        print(f"   平均FPS: {avg_fps:.1f} (目标: {self.fps})")
-        print(f"   平均帧大小: {avg_frame_kb:.1f} KB")
-        print(f"   传输速率: {transfer_rate_mbps:.2f} MB/s")
-        print(f"   总传输量: {total_mb:.1f} MB")
+        print(f"   平均FPS: {avg_fps:.1f}")
         if self.stats['last_success']:
             last_success_ago = datetime.now() - self.stats['last_success']
             print(f"   最后成功: {last_success_ago.total_seconds():.1f}秒前")
@@ -349,11 +236,8 @@ def main():
                        help='推流帧率 (默认: 20)')
     parser.add_argument('--quality', '-q', type=int, default=80,
                        help='JPEG压缩质量 1-100 (默认: 80)')
-    parser.add_argument('--max-width', '-w', type=int, default=1280,
-                       help='最大图像宽度，用于控制传输数据量 (默认: 1280)')
     parser.add_argument('--test', '-t', action='store_true',
                        help='仅测试连接，不开始推流')
-    parser.add_argument('-d', '--diagnose', action='store_true', help='诊断服务端问题')
     
     args = parser.parse_args()
     
@@ -365,23 +249,13 @@ def main():
     if args.quality < 1 or args.quality > 100:
         print("错误: 质量必须在1-100之间")
         sys.exit(1)
-        
-    if args.max_width < 320 or args.max_width > 3840:
-        print("错误: 最大宽度必须在320-3840之间")
-        sys.exit(1)
     
     # 创建客户端
     client = StreamClient(
         server_url=args.server,
         fps=args.fps,
-        quality=args.quality,
-        max_width=args.max_width
+        quality=args.quality
     )
-    
-    # 如果是诊断模式
-    if args.diagnose:
-        client.diagnose_server()
-        return
     
     if args.test:
         # 仅测试连接
@@ -391,7 +265,6 @@ def main():
             sys.exit(0)
         else:
             print("连接测试失败！")
-            client.diagnose_server()
             sys.exit(1)
     else:
         # 开始推流

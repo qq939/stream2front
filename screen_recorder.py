@@ -184,17 +184,12 @@ class ScreenRecorder:
             numpy.ndarray: BGR格式的图像数组，如果失败返回None
         """
         try:
-            # 如果没有初始化mss对象，临时创建一个
+            # 如果没有初始化mss对象，初始化一次并保持复用
             if not self.sct:
-                temp_sct = mss.mss()
-                monitor = temp_sct.monitors[self.monitor_index]
-                
-                # 截取屏幕
-                screenshot = temp_sct.grab(monitor)
-                temp_sct.close()
-            else:
-                # 使用已有的mss对象
-                screenshot = self.sct.grab(self.monitor)
+                self._initialize_capture()
+            
+            # 使用已有的mss对象截取屏幕
+            screenshot = self.sct.grab(self.monitor)
             
             # 转换为numpy数组
             frame = np.array(screenshot)

@@ -274,6 +274,10 @@ def internal_error(error):
     return jsonify({'error': '服务器内部错误'}), 500
 
 if __name__ == '__main__':
+    parser.add_argument('--port', '-p', type=int, default=8080,
+                       help='服务端监听端口 (默认: 8080)')
+    args = parser.parse_args()
+
     print("="*50)
     print("屏幕录制服务端启动中...")
     print(f"启动时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
@@ -288,7 +292,7 @@ if __name__ == '__main__':
     print("="*50)
     
     try:
-        app.run(host='0.0.0.0', port=8080, debug=False, threaded=True)
+        app.run(host='0.0.0.0', port=args.port, debug=False, threaded=True)
     except KeyboardInterrupt:
         print("\n服务已停止")
     except Exception as e:

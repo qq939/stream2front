@@ -6,6 +6,7 @@
 """
 
 import cv2
+import pyautogui
 import numpy as np
 import mss
 import time
@@ -196,7 +197,14 @@ class ScreenRecorder:
             
             # mss返回的是BGRA格式，转换为BGR
             frame = cv2.cvtColor(frame, cv2.COLOR_BGRA2BGR)
+            frame = cv2.resize(frame, self.screen_size)
+                # 获取鼠标当前位置
+            mouse_x, mouse_y = pyautogui.position()
             
+            # 在截图上绘制鼠标指针（简化版箭头）
+            cv2.circle(frame, (mouse_x, mouse_y), 5, (0, 0, 255), -1)  # 鼠标位置中心点
+            
+                    
             return frame
             
         except Exception as e:

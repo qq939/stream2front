@@ -234,7 +234,7 @@ def main():
                        help='服务端URL地址 (默认: http://localhost:8080)')
     parser.add_argument('--fps', '-f', type=int, default=20,
                        help='推流帧率 (默认: 20)')
-    parser.add_argument('--quality', '-q', type=int, default=80,
+    parser.add_argument('--quality', '-q', type=int, default=100,
                        help='JPEG压缩质量 1-100 (默认: 80)')
     parser.add_argument('--test', '-t', action='store_true',
                        help='仅测试连接，不开始推流')
